@@ -39,13 +39,15 @@ RUN CURRENT_DISTRO_RELEASE=$(awk '{match($0, /[0-9]+/,version)}END{print version
     fi \
     && cat /tmp/kolla_bashrc >> /etc/bashrc \
     && sed -i 's|^\(override_install_langs=.*\)|# \1|' /etc/yum.conf
-
+{% if base_distro == 'centos' %}
+    RUN rm  -f /etc/yum.repos.d/CentOS*.repo
+{% endif %}
 
 
 
 #### BEGIN REPO ENABLEMENT
 {% set base_yum_repo_files = [
-    '163.repo',
+    'aliyum.repo',
     'kolla-yum.repo',
  ] %}
 {%- for repo_file in base_yum_repo_files | customizable('yum_repo_files') %}
@@ -101,7 +103,6 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 ] %}
 
 {{ macros.install_packages(base_centos_yum_repo_packages | customizable("yum_centos_repo_packages")) }}
-RUN rm  -f /etc/yum.repos.d/CentOS*.repo
 {% for key in base_centos_yum_repo_keys | customizable('yum_centos_repo_keys') %}
     {%- if loop.first %}RUN {% else %}    && {% endif -%}
     rpm --import {{ key }} \
